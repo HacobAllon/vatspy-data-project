@@ -38,6 +38,8 @@ export function parseDatFile<S extends Record<string, { title: string; children:
                 itemResult[key] = section;
             });
 
+            if(sections.length > keys.length) throw new Error(`Too many sections for ${item}`)
+
             result[section as keyof S].push(itemResult);
         }
     }
@@ -52,8 +54,42 @@ export function isValidCoordinates([lon, lat]: unknown[]): boolean {
     const isLatValid = lat >= -90 && lat <= 90;
     const isLonValid = lon >= -180 && lon <= 180;
 
-    if(!isLatValid) console.log('!lat')
-    if(!isLonValid) console.log('!lon')
+    if (!isLatValid) console.log('!lat')
+    if (!isLonValid) console.log('!lon')
 
     return isLatValid && isLonValid;
+}
+
+let previousKey: string = '';
+let previousName: string = '';
+
+export function validateAlphabetPosition(key: string, value: string, throwOnError = true) {
+    if (!previousName || previousKey !== key) {
+        previousKey = key;
+        previousName = value;
+    }
+
+    if (value.localeCompare(previousName) < 0) {
+        if (throwOnError)
+            throw new Error(`Value ${previousName} in ${key} is in incorrect alphabetic order`)
+        else return false
+    }
+
+    previousName = value;
+
+    return true
+}
+
+const counters: Record<string, Record<string, true>> = {}
+
+export function count(key: string, value: string, throwOnError = true) {
+    counters[key] ??= {}
+    if (counters[key][value]) {
+        if (throwOnError)
+            throw new Error(`Value ${value} in ${key} is duplicated`)
+        else return false
+    }
+
+    counters[key][value] = true
+    return true
 }
